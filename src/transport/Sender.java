@@ -1,6 +1,8 @@
 package transport;
 
 public class Sender extends NetworkHost {
+    private boolean isWaiting;
+    private int packetNumber;
 
     /*
      * Predefined Constant (static member variables):
@@ -77,28 +79,34 @@ public class Sender extends NetworkHost {
 
     // This method will be called once, before any of your other sender-side methods are called. 
     // It can be used to do any required initialisation (e.g. of member variables you add to control the state of the sender).
-    // @Override
-    // public void init() {
-    // }
+     @Override
+    public void init() {
+        isWaiting = false;
+        packetNumber = 0;
+    } 
     
     // This method will be called whenever the app layer at the sender has a message to send.  
     // The job of your protocol is to ensure that the data in such a message is delivered in-order, and correctly, to the receiving application layer.
-    // @Override
-    // public void output(Message message) {
-    // }
+    @Override
+    public void output(Message message) {
+        udtSend(new Packet(packetNumber, packetNumber, 1, message.getData()));
+        packetNumber += 1;
+        startTimer(40);
+    }
     
     
     // This method will be called whenever a packet sent from the receiver (i.e. as a result of a udtSend() being done by a receiver procedure) arrives at the sender.  
     // "packet" is the (possibly corrupted) packet sent from the receiver.
-    // @Override
-    // public void input(Packet packet) {
-    // }
+    @Override
+    public void input(Packet packet) {
+        stopTimer();
+    }
     
     
     // This method will be called when the senders's timer expires (thus generating a timer interrupt). 
     // You'll probably want to use this method to control the retransmission of packets. 
     // See startTimer() and stopTimer(), above, for how the timer is started and stopped. 
-    // @Override
-    // public void timerInterrupt() {
-    // }
+    @Override
+    public void timerInterrupt() {
+    }
 }

@@ -76,14 +76,17 @@ public class Receiver extends NetworkHost {
 
     // This method will be called once, before any of your other receiver-side methods are called. 
     // It can be used to do any required initialisation (e.g. of member variables you add to control the state of the receiver).
-    // @Override
-    // public void init() {
-    // }
+    @Override
+    public void init() {
+        
+        
+    }
 
     // This method will be called whenever a packet sent from the sender(i.e. as a result of a udtSend() being called by the Sender ) arrives at the receiver. 
     // The argument "packet" is the (possibly corrupted) packet sent from the sender.
-    // @Override
-    // public void input(Packet packet) {
-    // }
+    @Override
+    public void input(Packet packet) {
+        //udtSend(packet.);
+    }
 
 }
