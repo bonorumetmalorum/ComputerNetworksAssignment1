@@ -86,7 +86,10 @@ public class Receiver extends NetworkHost {
     // The argument "packet" is the (possibly corrupted) packet sent from the sender.
     @Override
     public void input(Packet packet) {
-        //udtSend(packet.);
+        if(packet.getChecksum() != 1){
+            udtSend(new Packet(packet.getSeqnum(), 0, 1));
+        }
+        
     }
 
 }
