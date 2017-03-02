@@ -71,15 +71,19 @@ public class Sender extends NetworkHost {
     // Add any necessary class variables here. They can hold state information for the sender. 
     // Also add any necessary methods (e.g. checksum of a String)
     
-    public int checksum(String payload, int ack, int sequenceNumber){
-        byte[] bytes = payload.getBytes();
+    public int checksum(int sequenceNumber, int ackNumber, String payload){
         int checkSum = 0;
+        byte[] bytes = payload.getBytes();
         for(byte b:bytes){
             checkSum += b;
-        }
+        }   
+        checkSum += ackNumber;
         checkSum += sequenceNumber;
-        checkSum += ack;
         return checkSum;
+    }
+    
+    public int checkCheckSum(int sequenceNumber, int ackNumber){
+        return sequenceNumber + ackNumber;
     }
     
     // This is the constructor.  Don't touch!
@@ -99,7 +103,7 @@ public class Sender extends NetworkHost {
     // The job of your protocol is to ensure that the data in such a message is delivered in-order, and correctly, to the receiving application layer.
     @Override
     public void output(Message message) {
-        currentPacket = new Packet(packetNumber, packetNumber, checksum(message.getData(), packetNumber, packetNumber), message.getData());
+        currentPacket = new Packet(packetNumber, packetNumber, checksum(packetNumber, packetNumber, message.getData()), message.getData());
         udtSend(currentPacket);
         startTimer(40);
     }
@@ -109,13 +113,13 @@ public class Sender extends NetworkHost {
     // "packet" is the (possibly corrupted) packet sent from the receiver.
     @Override
     public void input(Packet packet) {
-//        if(packet.getChecksum() != checksum(packet.getPayload(), packet.getAcknum(), packet.getSeqnum()) || packet.){
-//            udtSend();
-//        }
-          if(packet.getAcknum() == packetNumber){
-            packetNumber ^= 1;
+        if(packet.getChecksum() == checkCheckSum(packet.getAcknum(), packet.getSeqnum()) && packet.getAcknum() == packetNumber){
             stopTimer();
-          }
+            packetNumber ^= 1;
+        }
+        else if(packet.getChecksum() != checkCheckSum(packet.getAcknum(), packet.getSeqnum()) || packet.getAcknum() != packetNumber){
+            udtSend(currentPacket);
+        }
     }
     
     
@@ -125,5 +129,6 @@ public class Sender extends NetworkHost {
     @Override
     public void timerInterrupt() {
         udtSend(currentPacket);
+        startTimer(40);
     }
 }

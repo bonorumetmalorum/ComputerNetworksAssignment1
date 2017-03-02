@@ -73,6 +73,22 @@ public class Receiver extends NetworkHost {
     public Receiver(int entityName) {
         super(entityName);
     }
+    
+    public int checkCheckSum(String payload, int ack, int sequenceNumber){
+        int checkSum = 0;
+        byte[] bytes = payload.getBytes();
+        for(byte b:bytes){
+            checkSum += b;
+        }   
+        checkSum += sequenceNumber;
+        checkSum += ack;
+        return checkSum;
+    }
+    
+    public int genCheckSum(Packet p){
+        return p.getAcknum() + p.getSeqnum();
+    }
+            
 
     // This method will be called once, before any of your other receiver-side methods are called. 
     // It can be used to do any required initialisation (e.g. of member variables you add to control the state of the receiver).
@@ -86,10 +102,9 @@ public class Receiver extends NetworkHost {
     // The argument "packet" is the (possibly corrupted) packet sent from the sender.
     @Override
     public void input(Packet packet) {
-        if(packet.getChecksum() != 1){
-            udtSend(new Packet(packet.getSeqnum(), 0, 1));
+        if(packet.getChecksum() == checkCheckSum(packet.getPayload(), packet.getAcknum(), packet.getSeqnum())){
+            udtSend(new Packet(packet.getSeqnum(), packet.getAcknum(), genCheckSum(packet)));
         }
-        
     }
 
 }
