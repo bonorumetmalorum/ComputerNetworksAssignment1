@@ -113,11 +113,14 @@ public class Sender extends NetworkHost {
     // "packet" is the (possibly corrupted) packet sent from the receiver.
     @Override
     public void input(Packet packet) {
+        System.out.println("-----Checksum: " + packet.getChecksum() + "----Ack: " + packet.getAcknum() + " ----sequence: " + packet.getSeqnum() + "----" );
         if(packet.getChecksum() == checkCheckSum(packet.getAcknum(), packet.getSeqnum()) && packet.getAcknum() == packetNumber){
+            System.out.println("is not corrupt");
             stopTimer();
             packetNumber ^= 1;
         }
         else if(packet.getChecksum() != checkCheckSum(packet.getAcknum(), packet.getSeqnum()) || packet.getAcknum() != packetNumber){
+            System.out.println("is corrupt");
             udtSend(currentPacket);
         }
     }

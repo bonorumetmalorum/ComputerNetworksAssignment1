@@ -104,6 +104,7 @@ public class Receiver extends NetworkHost {
     public void input(Packet packet) {
         if(packet.getChecksum() == checkCheckSum(packet.getPayload(), packet.getAcknum(), packet.getSeqnum())){
             udtSend(new Packet(packet.getSeqnum(), packet.getAcknum(), genCheckSum(packet)));
+            deliverData(packet.getPayload());
         }
     }
 
