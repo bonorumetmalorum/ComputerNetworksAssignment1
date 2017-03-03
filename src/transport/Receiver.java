@@ -66,6 +66,8 @@ public class Receiver extends NetworkHost {
      */
     
     // Add any necessary class variables here. They can hold state information for the receiver.
+    Packet currentPacket;
+    int state;
     // Also add any necessary methods (e.g. checksum of a String)
     
     
@@ -94,7 +96,8 @@ public class Receiver extends NetworkHost {
     // It can be used to do any required initialisation (e.g. of member variables you add to control the state of the receiver).
     @Override
     public void init() {
-        
+        currentPacket = null;
+        state = 0;
         
     }
 
@@ -102,9 +105,14 @@ public class Receiver extends NetworkHost {
     // The argument "packet" is the (possibly corrupted) packet sent from the sender.
     @Override
     public void input(Packet packet) {
-        if(packet.getChecksum() == checkCheckSum(packet.getPayload(), packet.getAcknum(), packet.getSeqnum())){
-            udtSend(new Packet(packet.getSeqnum(), packet.getAcknum(), genCheckSum(packet)));
+        System.out.println("received packet: " + packet.getSeqnum());
+        if(packet.getChecksum() == checkCheckSum(packet.getPayload(), packet.getAcknum(), packet.getSeqnum()) && state == packet.getSeqnum()){
             deliverData(packet.getPayload());
+            udtSend(new Packet(packet.getSeqnum(), packet.getAcknum(), genCheckSum(packet)));
+            state ^= 1;
+            System.out.println("current state: " + state);
+        }else{
+            udtSend(new Packet(packet.getSeqnum(), packet.getAcknum(), genCheckSum(packet)));
         }
     }
 
