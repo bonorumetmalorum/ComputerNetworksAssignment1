@@ -3,6 +3,7 @@ package transport;
 public class Sender extends NetworkHost {
     private int packetNumber;
     private Packet currentPacket;
+    private boolean waitingForAck;
 
     /*
      * Predefined Constant (static member variables):
@@ -45,16 +46,16 @@ public class Sender extends NetworkHost {
      *      Packet (Packet p):
      *          creates a new Packet, which is a copy of "p"
      *      Packet (int seq, int ack, int check, String newPayload):
-     *          creates a new Packet with a sequence field of "seq", an ack field of "ack", a checksum field of "check", and a payload of "newPayload"
+     *          creates a new Packet with a sequence field of "seq", an ack field of "ack", a checkSum field of "check", and a payload of "newPayload"
      *      Packet (int seq, int ack, int check)
-     *          chreate a new Packet with a sequence field of "seq", an ack field of "ack", a checksum field of "check", and an empty payload
+     *          chreate a new Packet with a sequence field of "seq", an ack field of "ack", a checkSum field of "check", and an empty payload
      *    Methods:
      *      void setSeqnum(int seqnum)
      *          sets the Packet's sequence field to seqnum
      *      void setAcknum(int acknum)
      *          sets the Packet's ack field to acknum
-     *      void setChecksum(int checksum)
-     *          sets the Packet's checksum to checksum
+     *      void setChecksum(int checkSum)
+     *          sets the Packet's checkSum to checkSum
      *      void setPayload(String payload) 
      *          sets the Packet's payload to payload
      *      int getSeqnum()
@@ -62,16 +63,16 @@ public class Sender extends NetworkHost {
      *      int getAcknum()
      *          returns the contents of the Packet's ack field
      *      int getChecksum()
-     *          returns the checksum of the Packet
+     *          returns the checkSum of the Packet
      *      String getPayload()
      *          returns the Packet's payload
      *
      */
     
     // Add any necessary class variables here. They can hold state information for the sender. 
-    // Also add any necessary methods (e.g. checksum of a String)
+    // Also add any necessary methods (e.g. checkSum of a String)
     
-    public int checksum(int sequenceNumber, int ackNumber, String payload){
+    public int checkSum(int sequenceNumber, int ackNumber, String payload){
         int checkSum = 0;
         byte[] bytes = payload.getBytes();
         for(byte b:bytes){
@@ -80,10 +81,6 @@ public class Sender extends NetworkHost {
         checkSum += ackNumber;
         checkSum += sequenceNumber;
         return checkSum;
-    }
-    
-    public int checkCheckSum(int sequenceNumber, int ackNumber){
-        return sequenceNumber + ackNumber;
     }
     
     // This is the constructor.  Don't touch!
@@ -97,15 +94,22 @@ public class Sender extends NetworkHost {
     public void init() {
         packetNumber = 0;
         currentPacket = null;
+        waitingForAck = false;
     } 
     
     // This method will be called whenever the app layer at the sender has a message to send.  
     // The job of your protocol is to ensure that the data in such a message is delivered in-order, and correctly, to the receiving application layer.
     @Override
     public void output(Message message) {
-        currentPacket = new Packet(packetNumber, packetNumber, checksum(packetNumber, packetNumber, message.getData()), message.getData());
-        udtSend(currentPacket);
-        startTimer(40);
+        if(!waitingForAck){
+            currentPacket = new Packet(packetNumber, packetNumber, checkSum(packetNumber, packetNumber, message.getData()), message.getData());
+            udtSend(currentPacket);
+            startTimer(40);
+            waitingForAck = true;
+        }else{
+            System.out.println("drop message");
+        }
+        
     }
     
     
@@ -114,12 +118,13 @@ public class Sender extends NetworkHost {
     @Override
     public void input(Packet packet) {
         System.out.println("-----Checksum: " + packet.getChecksum() + "----Ack: " + packet.getAcknum() + " ----sequence: " + packet.getSeqnum() + "----" );
-        if(packet.getChecksum() == checkCheckSum(packet.getAcknum(), packet.getSeqnum()) && packet.getAcknum() == packetNumber){
+        if(packet.getChecksum() == checkSum(packet.getAcknum(), packet.getSeqnum(), "") && packet.getAcknum() == packetNumber){
             System.out.println("is not corrupt");
             stopTimer();
             packetNumber ^= 1;
+            waitingForAck = false;
         }
-        else if(packet.getChecksum() != checkCheckSum(packet.getAcknum(), packet.getSeqnum()) || packet.getAcknum() != packetNumber){
+        else if(packet.getChecksum() != checkSum(packet.getAcknum(), packet.getSeqnum(), "") || packet.getAcknum() != packetNumber){
             System.out.println("is corrupt");
             udtSend(currentPacket);
         }

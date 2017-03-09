@@ -66,7 +66,7 @@ public class Receiver extends NetworkHost {
      */
     
     // Add any necessary class variables here. They can hold state information for the receiver.
-    Packet currentPacket;
+    Packet sndpkt;
     int state;
     // Also add any necessary methods (e.g. checksum of a String)
     
@@ -75,8 +75,8 @@ public class Receiver extends NetworkHost {
     public Receiver(int entityName) {
         super(entityName);
     }
-    
-    public int checkCheckSum(String payload, int ack, int sequenceNumber){
+    //method for creating and checking checksums, for no payload input empty string
+    public int checkSum(String payload, int ack, int sequenceNumber){
         int checkSum = 0;
         byte[] bytes = payload.getBytes();
         for(byte b:bytes){
@@ -86,17 +86,12 @@ public class Receiver extends NetworkHost {
         checkSum += ack;
         return checkSum;
     }
-    
-    public int genCheckSum(Packet p){
-        return p.getAcknum() + p.getSeqnum();
-    }
-            
 
     // This method will be called once, before any of your other receiver-side methods are called. 
     // It can be used to do any required initialisation (e.g. of member variables you add to control the state of the receiver).
     @Override
     public void init() {
-        currentPacket = null;
+        sndpkt = null;
         state = 0;
         
     }
@@ -106,13 +101,13 @@ public class Receiver extends NetworkHost {
     @Override
     public void input(Packet packet) {
         System.out.println("received packet: " + packet.getSeqnum());
-        if(packet.getChecksum() == checkCheckSum(packet.getPayload(), packet.getAcknum(), packet.getSeqnum()) && state == packet.getSeqnum()){
+        if(packet.getChecksum() == checkSum(packet.getPayload(), packet.getAcknum(), packet.getSeqnum()) && state == packet.getSeqnum()){
             deliverData(packet.getPayload());
-            udtSend(new Packet(packet.getSeqnum(), packet.getAcknum(), genCheckSum(packet)));
+            udtSend(new Packet(packet.getSeqnum(), packet.getAcknum(), checkSum("", packet.getAcknum(), packet.getSeqnum())));
             state ^= 1;
             System.out.println("current state: " + state);
         }else{
-            udtSend(new Packet(packet.getSeqnum(), packet.getAcknum(), genCheckSum(packet)));
+            udtSend(new Packet(packet.getSeqnum(), packet.getAcknum(), checkSum("", packet.getAcknum(), packet.getSeqnum())));
         }
     }
 

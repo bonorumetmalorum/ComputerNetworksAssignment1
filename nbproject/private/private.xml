@@ -2,16 +2,6 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group>
-            <file>file:/D:/Users/govind/Documents/University-of-Sussex/Computer%20Networks/ComputerNetworksAssignment1/src/transport/EventList.java</file>
-            <file>file:/D:/Users/govind/Documents/University-of-Sussex/Computer%20Networks/ComputerNetworksAssignment1/src/transport/Sender.java</file>
-            <file>file:/D:/Users/govind/Documents/University-of-Sussex/Computer%20Networks/ComputerNetworksAssignment1/src/transport/NetworkHost.java</file>
-            <file>file:/D:/Users/govind/Documents/University-of-Sussex/Computer%20Networks/ComputerNetworksAssignment1/src/transport/Message.java</file>
-            <file>file:/D:/Users/govind/Documents/University-of-Sussex/Computer%20Networks/ComputerNetworksAssignment1/src/transport/EventType.java</file>
-            <file>file:/D:/Users/govind/Documents/University-of-Sussex/Computer%20Networks/ComputerNetworksAssignment1/src/transport/Assignment.java</file>
-            <file>file:/D:/Users/govind/Documents/University-of-Sussex/Computer%20Networks/ComputerNetworksAssignment1/src/transport/Receiver.java</file>
-            <file>file:/D:/Users/govind/Documents/University-of-Sussex/Computer%20Networks/ComputerNetworksAssignment1/src/transport/NetworkSimulator.java</file>
-            <file>file:/D:/Users/govind/Documents/University-of-Sussex/Computer%20Networks/ComputerNetworksAssignment1/src/transport/Packet.java</file>
-        </group>
+        <group/>
     </open-files>
 </project-private>
