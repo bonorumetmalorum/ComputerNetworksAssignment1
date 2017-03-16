@@ -1,10 +1,7 @@
 package transport;
 
 public class Sender extends NetworkHost {
-    private int packetNumber;
-    private Packet currentPacket;
-    private boolean waitingForAck;
-
+    
     /*
      * Predefined Constant (static member variables):
      *
@@ -68,21 +65,30 @@ public class Sender extends NetworkHost {
      *          returns the Packet's payload
      *
      */
-    
+
     // Add any necessary class variables here. They can hold state information for the sender. 
+    private int packetNumber;
+    private Packet currentPacket;
+    private boolean waitingForAck;
     // Also add any necessary methods (e.g. checkSum of a String)
-    
+    /**
+     * calculates the checksum of the packet for setting and checking
+     * @param sequenceNumber the sequence number of the packet
+     * @param ackNumber the acknowledgement number
+     * @param payload the payload of the packet
+     * @return returns the integer the sum of the packets payload, sequence number and acknumber
+     */
     public int checkSum(int sequenceNumber, int ackNumber, String payload){
         int checkSum = 0;
         byte[] bytes = payload.getBytes();
         for(byte b:bytes){
             checkSum += b;
-        }   
+        }
         checkSum += ackNumber;
         checkSum += sequenceNumber;
         return checkSum;
     }
-    
+
     // This is the constructor.  Don't touch!
     public Sender(int entityName) {
         super(entityName);
@@ -101,32 +107,31 @@ public class Sender extends NetworkHost {
     // The job of your protocol is to ensure that the data in such a message is delivered in-order, and correctly, to the receiving application layer.
     @Override
     public void output(Message message) {
+        //boolean to check and makes that there are no packets in transit, if there are reject the message from the applciation layer
         if(!waitingForAck){
+            //create a new packet with sequence number and packet number, calculate the checksum of it
             currentPacket = new Packet(packetNumber, packetNumber, checkSum(packetNumber, packetNumber, message.getData()), message.getData());
             udtSend(currentPacket);
+            //start a timer
             startTimer(40);
+            //indicate that a packet has been sent
             waitingForAck = true;
-        }else{
-            System.out.println("drop message");
         }
-        
     }
     
     
-    // This method will be called whenever a packet sent from the receiver (i.e. as a result of a udtSend() being done by a receiver procedure) arrives at the sender.  
+    // This method will be called whenever a packet sent from the receiver (i.e. as a result of a udtSend() being done by a receiver procedure) arrives
+    // at the sender.  
     // "packet" is the (possibly corrupted) packet sent from the receiver.
     @Override
     public void input(Packet packet) {
-        System.out.println("-----Checksum: " + packet.getChecksum() + "----Ack: " + packet.getAcknum() + " ----sequence: " + packet.getSeqnum() + "----" );
+        //if the packet is not corrupt and has the right ack number
         if(packet.getChecksum() == checkSum(packet.getAcknum(), packet.getSeqnum(), "") && packet.getAcknum() == packetNumber){
-            System.out.println("is not corrupt");
+            //stop the timer and change the packet number, achieved by XORing the packet number with 1
             stopTimer();
             packetNumber ^= 1;
+            //indicate that we are no longer waiting for a response and we are ready to send another packet in to the network
             waitingForAck = false;
-        }
-        else if(packet.getChecksum() != checkSum(packet.getAcknum(), packet.getSeqnum(), "") || packet.getAcknum() != packetNumber){
-            System.out.println("is corrupt");
-            udtSend(currentPacket);
         }
     }
     

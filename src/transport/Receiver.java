@@ -1,4 +1,4 @@
-package transport;
+ package transport;
 
 public class Receiver extends NetworkHost {
      /*
@@ -65,9 +65,9 @@ public class Receiver extends NetworkHost {
      *
      */
     
-    // Add any necessary class variables here. They can hold state information for the receiver.
+    // Add any necessary class variables here. They can hold expectedSequenceNumber information for the receiver.
     Packet sndpkt;
-    int state;
+    int expectedSequenceNumber;
     // Also add any necessary methods (e.g. checksum of a String)
     
     
@@ -88,27 +88,38 @@ public class Receiver extends NetworkHost {
     }
 
     // This method will be called once, before any of your other receiver-side methods are called. 
-    // It can be used to do any required initialisation (e.g. of member variables you add to control the state of the receiver).
+    // It can be used to do any required initialisation (e.g. of member variables you add to control the expectedSequenceNumber of the receiver).
     @Override
     public void init() {
+        //sndpkt is the current ack that needs to be sent
         sndpkt = null;
-        state = 0;
+        //the expected sequence number
+        expectedSequenceNumber = 0;
         
     }
 
-    // This method will be called whenever a packet sent from the sender(i.e. as a result of a udtSend() being called by the Sender ) arrives at the receiver. 
+    // This method will be called whenever a packet sent from the sender(i.e. as a result of a udtSend() being called by the Sender )
+    // arrives at the receiver. 
     // The argument "packet" is the (possibly corrupted) packet sent from the sender.
     @Override
     public void input(Packet packet) {
-        System.out.println("received packet: " + packet.getSeqnum());
-        if(packet.getChecksum() == checkSum(packet.getPayload(), packet.getAcknum(), packet.getSeqnum()) && state == packet.getSeqnum()){
+        //if the packet is not corrupt and has the expected sequence number
+        if(packet.getChecksum() == checkSum(packet.getPayload(), packet.getAcknum(), packet.getSeqnum()) && expectedSequenceNumber == packet.getSeqnum()){
+            //deliver the data to the applciation layer and create an ack to send back
             deliverData(packet.getPayload());
-            udtSend(new Packet(packet.getSeqnum(), packet.getAcknum(), checkSum("", packet.getAcknum(), packet.getSeqnum())));
-            state ^= 1;
-            System.out.println("current state: " + state);
-        }else{
-            udtSend(new Packet(packet.getSeqnum(), packet.getAcknum(), checkSum("", packet.getAcknum(), packet.getSeqnum())));
+            //has the sequence and acknumber of the currently received packet
+            sndpkt = new Packet(packet.getSeqnum(), packet.getAcknum(), checkSum("", packet.getAcknum(), packet.getSeqnum())); 
+            udtSend(sndpkt);
+            //XOR the expected sequence number like in the sender
+            expectedSequenceNumber ^= 1;
         }
+        else if(packet.getChecksum() != checkSum(packet.getPayload(), packet.getAcknum(), packet.getSeqnum()) || expectedSequenceNumber != packet.getSeqnum()){
+            //if the first packet was not received properly, do not send anything, wait for a timeout at the sender side
+            //send back the last ack if the current one was a duplicate or corrupted
+            if(sndpkt != null){
+                udtSend(sndpkt);
+            }
+        }
+                
     }
-
 }
